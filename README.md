@@ -65,21 +65,16 @@ VITE_CONTRACT_ID=CD6OGC46OFCV52IJQKEDVKLX5ASA3ZMSTHAAZQIPDSJV6VZ3KUJDEP4D
 # Option 2: Enter it in the UI when no env var is set
 ```
 
-## Deployed Contract
+## Deployed Contract (Testnet)
 
-**Contract ID:** CD6OGC46OFCV52IJQKEDVKLX5ASA3ZMSTHAAZQIPDSJV6VZ3KUJDEP4D
+**Contract ID:** `CDAXDH53B55L6XMBI7R4RVOI64YZ7MVSWE27LX4ERP352NWCCI5YQTMU`
 
-*Replace with your deployed contract ID after following the deploy steps above.*
+- **Deploy tx:** [5283698bee...](https://stellar.expert/explorer/testnet/tx/5283698beec5041d7eda1d0efaae83884b8fdc6de0a0df8a1591f96ae957f287)
+- **Initialize tx:** [f637b26a39...](https://stellar.expert/explorer/testnet/tx/f637b26a39cf3a047bf37ebd87a0d721c3e182479895f647ab66e7c3f3906fb5)
+- **Vote tx:** [c2c43e694b...](https://stellar.expert/explorer/testnet/tx/c2c43e694b7b2512f196eace1b62b1cf2c6162b334e2edb1a0db3d78872fac7e)
 
-## Transaction Hash (Example)
-
-See a sample contract call on Stellar Explorer:
-
-```
-https://stellar.expert/explorer/testnet/tx/<YOUR_TX_HASH>
-```
-
-*Replace `<YOUR_TX_HASH>` with an actual transaction hash after casting a vote.*
+Poll: **"What framework should we use for the next project?"**
+Options: React (1 vote), Vue (0), Svelte (0), Solid (0)
 
 ## Screenshots
 
