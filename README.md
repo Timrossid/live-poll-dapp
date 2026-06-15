@@ -56,7 +56,7 @@ soroban contract invoke \
 ## Frontend Setup
 
 ```bash
-npm install
+npm install --legacy-peer-deps
 npm run dev
 ```
 
