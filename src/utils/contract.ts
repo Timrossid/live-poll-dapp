@@ -49,8 +49,14 @@ export async function getPollData(
 
   const votes: Record<number, number> = {};
   if (votesMap) {
-    for (const [key, val] of votesMap.entries()) {
-      votes[Number(key)] = Number(val);
+    if (votesMap instanceof Map) {
+      for (const [key, val] of votesMap.entries()) {
+        votes[Number(key)] = Number(val);
+      }
+    } else if (typeof votesMap === 'object') {
+      for (const [key, val] of Object.entries(votesMap)) {
+        votes[Number(key)] = Number(val);
+      }
     }
   }
 
