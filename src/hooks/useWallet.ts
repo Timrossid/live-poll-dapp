@@ -39,11 +39,23 @@ export function useWallet() {
           if (!resolved) reject(new Error('Connection timed out'));
         }, 60000);
 
+        let walletSelected = false;
+
         kit.openModal({
-          onWalletSelected: (wallet) => {
+          onWalletSelected: async (wallet) => {
+            walletSelected = true;
             kit.setWallet(wallet.id);
+
+            try {
+              const { address } = await kit.getAddress();
+              clearTimeout(timer);
+              resolved = true;
+              resolve(address);
+            } catch (e) {
+              reject(e);
+            }
           },
-          onClosed: async (err) => {
+          onClosed: (err) => {
             if (resolved) return;
             clearTimeout(timer);
 
@@ -55,16 +67,11 @@ export function useWallet() {
               return reject(err);
             }
 
-            try {
-              const { address } = await kit.getAddress();
-              if (!address) {
-                return reject(new Error('No address returned from wallet'));
-              }
-              resolved = true;
-              resolve(address);
-            } catch (e) {
-              reject(e);
+            if (!walletSelected) {
+              return reject(new UserRejectedError());
             }
+
+            reject(new Error('Wallet connection was interrupted'));
           },
         });
       });
