@@ -32,39 +32,45 @@ export function useWallet() {
 
     try {
       const kit = kitRef.current;
-      let selectedWalletId = '';
 
-      await kit.openModal({
-        onWalletSelected: (wallet) => {
-          selectedWalletId = wallet.id;
-          kit.setWallet(wallet.id);
-        },
-        onClosed: (err) => {
-          if (err) {
-            throw err;
-          }
-        },
+      const { address } = await new Promise<{ address: string }>((resolve, reject) => {
+        let walletId = '';
+
+        kit.openModal({
+          onWalletSelected: (wallet) => {
+            walletId = wallet.id;
+            kit.setWallet(wallet.id);
+          },
+          onClosed: (err) => {
+            if (err) {
+              const msg = err.message?.toLowerCase() || '';
+              if (msg.includes('reject') || msg.includes('cancelled') || msg.includes('closed')) {
+                return reject(new UserRejectedError());
+              }
+              return reject(err);
+            }
+            if (!walletId) {
+              return reject(new UserRejectedError());
+            }
+            kit.getAddress({ skipRequestAccess: true }).then(resolve).catch(reject);
+          },
+        });
       });
-
-      if (!selectedWalletId) {
-        throw new UserRejectedError();
-      }
-
-      const { address } = await kit.getAddress({ skipRequestAccess: true });
-      if (!address) {
-        throw new Error('No address returned from wallet');
-      }
 
       setPublicKey(address);
       return address;
     } catch (err: any) {
       const msg = err?.message?.toLowerCase() || '';
 
+      if (err instanceof UserRejectedError) {
+        setWalletError('Connection was rejected. Please try again.');
+        throw err;
+      }
+
       if (
         msg.includes('reject') ||
         msg.includes('cancelled') ||
-        msg.includes('closed') ||
-        msg.includes('close')
+        msg.includes('closed')
       ) {
         setWalletError('Connection was rejected. Please try again.');
         throw new UserRejectedError();
