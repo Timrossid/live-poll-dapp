@@ -78,8 +78,11 @@ Options: React (1 vote), Vue (0), Svelte (0), Solid (0)
 
 ## Screenshots
 
-> *Replace with your screenshots:*
-> 1. Wallet options available (the StellarWalletsKit modal showing Freighter, Lobstr, etc.)
+![Wallet options modal](screenshots/wallet-modal.png)
+*StellarWalletsKit modal showing available wallets (Freighter, Lobstr, Albedo, xBull, etc.)*
+
+![Connected wallet with poll](screenshots/connected-poll.png)
+*Connected wallet showing live poll with results and transaction status*
 
 ## Project Structure
 
