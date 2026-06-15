@@ -3,7 +3,7 @@ import {
   StellarWalletsKit,
   WalletNetwork,
   allowAllModules,
-} from '@stellar/stellar-wallets-kit';
+} from '@creit.tech/stellar-wallets-kit';
 import { WalletNotFoundError, UserRejectedError } from '../utils/contract';
 
 let kitInstance: StellarWalletsKit | null = null;
@@ -32,38 +32,58 @@ export function useWallet() {
 
     try {
       const kit = kitRef.current;
+      let selectedWalletId = '';
 
-      const { address } = await kit.openModal({
-        onError: (error) => {
-          if (error?.message?.includes('reject') || error?.message?.includes('cancelled') || error?.message?.includes('closed')) {
-            throw new UserRejectedError();
+      await kit.openModal({
+        onWalletSelected: (wallet) => {
+          selectedWalletId = wallet.id;
+          kit.setWallet(wallet.id);
+        },
+        onClosed: (err) => {
+          if (err) {
+            throw err;
           }
-          throw error;
         },
       });
 
-      if (!address) {
+      if (!selectedWalletId) {
         throw new UserRejectedError();
+      }
+
+      const { address } = await kit.getAddress({ skipRequestAccess: true });
+      if (!address) {
+        throw new Error('No address returned from wallet');
       }
 
       setPublicKey(address);
       return address;
     } catch (err: any) {
-      if (err instanceof UserRejectedError) {
+      const msg = err?.message?.toLowerCase() || '';
+
+      if (
+        msg.includes('reject') ||
+        msg.includes('cancelled') ||
+        msg.includes('closed') ||
+        msg.includes('close')
+      ) {
         setWalletError('Connection was rejected. Please try again.');
-      } else if (
-        err.message?.includes('wallet') ||
-        err.message?.includes('install') ||
-        err.message?.includes('not found') ||
-        err.message?.includes('module')
+        throw new UserRejectedError();
+      }
+
+      if (
+        msg.includes('wallet') ||
+        msg.includes('install') ||
+        msg.includes('not found') ||
+        msg.includes('module') ||
+        msg.includes('available')
       ) {
         setWalletError(
           'No Stellar wallet detected. Please install Freighter or Lobstr wallet extension.'
         );
         throw new WalletNotFoundError();
-      } else {
-        setWalletError(err.message || 'Failed to connect wallet');
       }
+
+      setWalletError(err.message || 'Failed to connect wallet');
       throw err;
     } finally {
       setIsConnecting(false);
@@ -83,7 +103,7 @@ export function useWallet() {
   const signTransaction: TxSigner = useCallback(async (xdr: string) => {
     const kit = kitRef.current;
     const { signedTxXdr } = await kit.signTransaction(xdr, {
-      network: WalletNetwork.TESTNET,
+      networkPassphrase: WalletNetwork.TESTNET,
     });
     return signedTxXdr;
   }, []);

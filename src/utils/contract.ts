@@ -1,5 +1,5 @@
 import {
-  SorobanRpc,
+  rpc,
   TransactionBuilder,
   Networks,
   BASE_FEE,
@@ -7,11 +7,12 @@ import {
   scValToNative,
   Contract,
   Address,
+  xdr,
 } from '@stellar/stellar-sdk';
 
 const RPC_URL = 'https://soroban-testnet.stellar.org';
 
-const server = new SorobanRpc.Server(RPC_URL);
+const server = new rpc.Server(RPC_URL);
 
 export interface PollData {
   question: string;
@@ -29,21 +30,18 @@ export async function getPollData(
   const contract = new Contract(contractId);
 
   const question = await simulateRead<string>(
-    server,
     account,
     contract,
     'get_question'
   );
 
   const options = await simulateRead<string[]>(
-    server,
     account,
     contract,
     'get_options'
   );
 
   const votesMap = await simulateRead<Map<number, number>>(
-    server,
     account,
     contract,
     'get_votes'
@@ -57,7 +55,6 @@ export async function getPollData(
   }
 
   const hasVoted = await simulateRead<boolean>(
-    server,
     account,
     contract,
     'has_voted',
@@ -65,7 +62,6 @@ export async function getPollData(
   );
 
   const totalVoters = await simulateRead<number>(
-    server,
     account,
     contract,
     'get_total_voters'
@@ -81,11 +77,10 @@ export async function getPollData(
 }
 
 async function simulateRead<T>(
-  rpcServer: SorobanRpc.Server,
   account: any,
   contract: Contract,
   method: string,
-  ...args: any[]
+  ...args: xdr.ScVal[]
 ): Promise<T | null> {
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,
@@ -95,14 +90,14 @@ async function simulateRead<T>(
     .setTimeout(30)
     .build();
 
-  const sim = await rpcServer.simulateTransaction(tx);
+  const sim = await server.simulateTransaction(tx);
 
-  if (SorobanRpc.Api.isSimulationError(sim)) {
+  if (rpc.Api.isSimulationError(sim)) {
     console.warn(`Simulation error for ${method}:`, sim.error);
     return null;
   }
 
-  if (SorobanRpc.Api.isSimulationSuccess(sim) && sim.result) {
+  if (rpc.Api.isSimulationSuccess(sim) && sim.result) {
     return scValToNative(sim.result.retval) as T;
   }
 
@@ -146,28 +141,30 @@ export async function castVote(
 
   if (sendResult.status === 'ERROR') {
     if (sendResult.errorResult) {
-      const errorStr = sendResult.errorResult.result().toString();
-      if (errorStr.includes('op_underfunded') || errorStr.includes('insufficient')) {
+      const resultMeta = sendResult.errorResult.result().switch();
+      if (resultMeta === xdr.TransactionResultCode.txInsufficientBalance()) {
         throw new InsufficientBalanceError(
           'Insufficient balance to complete this transaction. You need at least 1.5 XLM for the contract entry.'
         );
       }
-      throw new TransactionError(`Transaction failed: ${sendResult.errorResult.result().toXDR('base64').slice(0, 100)}`);
+      throw new TransactionError(
+        `Transaction failed: ${resultMeta.name || 'Unknown error'}`
+      );
     }
     throw new TransactionError('Transaction submission returned an error');
   }
 
-  const hash = sendResult.hash!;
+  const hash = sendResult.hash;
 
   let txResult = await server.getTransaction(hash);
   let attempts = 0;
-  while (txResult.status === 'NOT_FOUND' && attempts < 30) {
+  while (txResult.status === rpc.Api.GetTransactionStatus.NOT_FOUND && attempts < 30) {
     await new Promise((r) => setTimeout(r, 1000));
     txResult = await server.getTransaction(hash);
     attempts++;
   }
 
-  if (txResult.status === 'FAILED') {
+  if (txResult.status === rpc.Api.GetTransactionStatus.FAILED) {
     return { hash, status: 'failed' };
   }
 
