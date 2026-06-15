@@ -9,8 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@stellar/stellar-sdk": "^15.1.0",
     "@creit.tech/stellar-wallets-kit": "^1.9.5",
+    "@stellar/stellar-sdk": "^15.1.0",
+    "buffer": "^6.0.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
