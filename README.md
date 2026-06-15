@@ -51,7 +51,7 @@ soroban contract invoke \
 
 ## Live Demo
 
-<!-- Paste your Vercel/Netlify URL here after deploying -->
+https://live-poll-dapp-git-main-timrossids-projects.vercel.app
 
 ## Frontend Setup
 
