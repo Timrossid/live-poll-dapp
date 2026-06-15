@@ -91,6 +91,9 @@ Options: React (1 vote), Vue (0), Svelte (0), Solid (0)
 ![Vercel deployment](screenshots/vercel-deploy.png)
 *Vercel deployment settings with VITE_CONTRACT_ID environment variable*
 
+![Vote cast successfully](screenshots/vote-success.png)
+*Successful vote with transaction explorer link and live results update*
+
 ## Project Structure
 
 ```
