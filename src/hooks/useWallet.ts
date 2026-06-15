@@ -32,16 +32,21 @@ export function useWallet() {
 
     try {
       const kit = kitRef.current;
+      let resolved = false;
 
-      const { address } = await new Promise<{ address: string }>((resolve, reject) => {
-        let walletId = '';
+      const address = await new Promise<string>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          if (!resolved) reject(new Error('Connection timed out'));
+        }, 60000);
 
         kit.openModal({
           onWalletSelected: (wallet) => {
-            walletId = wallet.id;
             kit.setWallet(wallet.id);
           },
-          onClosed: (err) => {
+          onClosed: async (err) => {
+            if (resolved) return;
+            clearTimeout(timer);
+
             if (err) {
               const msg = err.message?.toLowerCase() || '';
               if (msg.includes('reject') || msg.includes('cancelled') || msg.includes('closed')) {
@@ -49,10 +54,17 @@ export function useWallet() {
               }
               return reject(err);
             }
-            if (!walletId) {
-              return reject(new UserRejectedError());
+
+            try {
+              const { address } = await kit.getAddress();
+              if (!address) {
+                return reject(new Error('No address returned from wallet'));
+              }
+              resolved = true;
+              resolve(address);
+            } catch (e) {
+              reject(e);
             }
-            kit.getAddress({ skipRequestAccess: true }).then(resolve).catch(reject);
           },
         });
       });
@@ -62,34 +74,15 @@ export function useWallet() {
     } catch (err: any) {
       const msg = err?.message?.toLowerCase() || '';
 
-      if (err instanceof UserRejectedError) {
+      if (err instanceof UserRejectedError || msg.includes('reject') || msg.includes('cancelled') || msg.includes('closed')) {
         setWalletError('Connection was rejected. Please try again.');
-        throw err;
+      } else if (msg.includes('wallet') || msg.includes('install') || msg.includes('not found') || msg.includes('module') || msg.includes('available')) {
+        setWalletError('No Stellar wallet detected. Please install Freighter or Lobstr wallet extension.');
+      } else if (msg.includes('timeout')) {
+        setWalletError('Connection timed out. Please try again.');
+      } else {
+        setWalletError(err.message || 'Failed to connect wallet');
       }
-
-      if (
-        msg.includes('reject') ||
-        msg.includes('cancelled') ||
-        msg.includes('closed')
-      ) {
-        setWalletError('Connection was rejected. Please try again.');
-        throw new UserRejectedError();
-      }
-
-      if (
-        msg.includes('wallet') ||
-        msg.includes('install') ||
-        msg.includes('not found') ||
-        msg.includes('module') ||
-        msg.includes('available')
-      ) {
-        setWalletError(
-          'No Stellar wallet detected. Please install Freighter or Lobstr wallet extension.'
-        );
-        throw new WalletNotFoundError();
-      }
-
-      setWalletError(err.message || 'Failed to connect wallet');
       throw err;
     } finally {
       setIsConnecting(false);
@@ -100,7 +93,7 @@ export function useWallet() {
     try {
       await kitRef.current.disconnect();
     } catch {
-      // ignore disconnect errors
+      // ignore
     }
     setPublicKey(null);
     setWalletError(null);
