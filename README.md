@@ -49,6 +49,10 @@ soroban contract invoke \
   --options '["React", "Vue", "Svelte", "Solid"]'
 ```
 
+## Live Demo
+
+<!-- Paste your Vercel/Netlify URL here after deploying -->
+
 ## Frontend Setup
 
 ```bash
