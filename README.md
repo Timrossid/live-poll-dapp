@@ -88,6 +88,9 @@ Options: React (1 vote), Vue (0), Svelte (0), Solid (0)
 ![Connected wallet with poll](screenshots/connected-poll.png)
 *Connected wallet showing live poll with results and transaction status*
 
+![Vercel deployment](screenshots/vercel-deploy.png)
+*Vercel deployment settings with VITE_CONTRACT_ID environment variable*
+
 ## Project Structure
 
 ```
